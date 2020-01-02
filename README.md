@@ -13,6 +13,8 @@ properly when converting text to table. It currently allows you to:
 
 There currently is no functionality for converting text that has the same row and column separators (Tab and Tab, Comma and Comma, etc)
 
+For information on how to properly save this jsxbin file, visit: https://indesignsecrets.com/how-to-install-a-script-in-indesign-that-you-found-in-a-forum-or-blog-post.php
+
 For information on installing scripts, visit: https://redokun.com/resources/install-an-indesign-script
 
 For bug or feature requests, email brianpifer@gmail.com. Please begin your subject line with "TTT: "
