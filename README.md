@@ -1,6 +1,9 @@
 # terrificTtt
 Terrific Text to Table for Adobe InDesign CS
-v.01
+v2
+
+Copyright 2020 Design Time Solutions
+Author: Brian Pifer, brianpifer@gmail.com
 
 This tool provides more robust functionality for converting text to table. It helps to ensure that Table Styles are applied
 properly when converting text to table. It currently allows you to: 
