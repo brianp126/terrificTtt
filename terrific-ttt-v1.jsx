@@ -1,3 +1,4 @@
+#target "InDesign"
 
 var Controller = function(doc) {
 // DIALOG
@@ -82,7 +83,7 @@ var Controller = function(doc) {
 		statictext3.alignment = ["left","center"]; 
 
 	var numCols = group3.add('edittext {properties: {name: "numCols"}}'); 
-		numCols.enabled = true; 
+		numCols.enabled = false; 
 		numCols.text = "1"; 
 		numCols.preferredSize.width = 200; 
 
@@ -145,12 +146,13 @@ var Controller = function(doc) {
 	var group6 = panel3.add("group", undefined, {name: "group6"}); 
 		group6.orientation = "row"; 
 		group6.alignChildren = ["left","center"]; 
-		group6.spacing = 20; 
+		group6.spacing = 10; 
 		group6.margins = 0; 
 
 	var statictext5 = group6.add("statictext", undefined, undefined, {name: "statictext5"}); 
 		statictext5.helpTip = "The # of existing header rows in selected text"; 
-		statictext5.text = "Existing header rows"; 
+		statictext5.text = "Existing header rows";
+		statictext5.justify = "right"; 
 
 	var headerCount = group6.add('edittext {properties: {name: "headerCount"}}'); 
 		headerCount.text = "0"; 
@@ -161,13 +163,14 @@ var Controller = function(doc) {
 	var group7 = panel3.add("group", undefined, {name: "group7"}); 
 		group7.orientation = "row"; 
 		group7.alignChildren = ["left","center"]; 
-		group7.spacing = 20; 
+		group7.spacing = 10; 
 		group7.margins = 5; 
 
 	var statictext6 = group7.add("statictext", undefined, undefined, {name: "statictext6"}); 
 		statictext6.helpTip = "The # of existing header rows in selected text"; 
 		statictext6.text = "Existing footer rows"; 
-		statictext6.preferredSize.width = 120; 
+		statictext6.preferredSize.width = 117; 
+		statictext6.justify = "right"; 
 
 	var footerCount = group7.add('edittext {properties: {name: "footerCount"}}'); 
 		footerCount.text = "0"; 
@@ -227,104 +230,18 @@ var Controller = function(doc) {
 		else {
 			validatedInputObject.numCols = validateNumberInputs(numCols.text);
 		}
+
+		if (validatedInputObject.colSepSelection === validatedInputObject.rowSepSelection) {
+			alert("The script currently cannot accommodate the same separators for rows and columns. If you'd liked that feature, email brianpifer@gmail.com");
+			exit();
+		}
+
 		return validatedInputObject;
 	}
 	if (result == 2) {
 		exit();
 	}
 };
-
-/*
-var Controller = function() {
-	
-	var dialName = "Table Maker";
-	var dialog = app.dialogs.add({ 
-		name: dialName,
-		canCancel: true,
-	});
-	
-	var radLabels = {
-		tab: "Tab",
-		par: "Paragraph",
-		com: "Comma",
-	};
-    var colType = undefined; 
-    var rowType = undefined;
-    
-    var typeStrings = {
-        comma: ",",
-        paragraph: "\r",
-        tab: "\t",
-    };
-
-	with (dialog) {
-		with (dialogColumns.add()) {
-			staticTexts.add({staticLabel: "Column Separator"});
-			var colGroup = radiobuttonGroups.add();
-			with (colGroup) {
-				radiobuttonControls.add
-				({staticLabel: radLabels.tab});
-				radiobuttonControls.add
-				({staticLabel: radLabels.par});
-				radiobuttonControls.add
-				({staticLabel: radLabels.com});
-            }
-			staticTexts.add({staticLabel: "Row Separator"});
-			var rowGroup = radiobuttonGroups.add();
-			with (rowGroup) {
-				radiobuttonControls.add
-				({staticLabel: radLabels.tab});
-				radiobuttonControls.add
-				({staticLabel: radLabels.par});
-				radiobuttonControls.add
-				({staticLabel: radLabels.com});
-			}
-		}
-	}
-	
-	if (dialog.show()) {
-		switch(colGroup.selectedButton) {
-			case 0:
-				colType = radLabels.tab;
-				break;
-			case 1: 
-				colType = radLabels.par;
-				break;
-			case 2:
-				colType = radLabels.com;
-				break;
-			default: break;
-		}
-        if (rowGroup.selectedButton == 0) {
-			rowType = radLabels.tab;
-		}
-		else if (rowGroup.selectedButton == 1) {
-			rowType = radLabels.par;
-		} 
-		else if (rowGroup.selectedButton == 2) {
-			rowType = radLabels.com;
-        }
-	}
-	else {
-		dialog.destroy();
-    }
-    
-    
-	
-	this.getColType = function() {
-		return typeStrings[colType.toLowerCase()];
-    };
-    
-    this.getRowType = function() {
-		return typeStrings[rowType.toLowerCase()];
-	};
-	
-	this.getOptions = function() {
-		return radLabels;
-	};
-	
-};
-*/
 
 var makeHeaders = function(headerCount, table) {
 	for (var i = 0; i < headerCount; i++) {
@@ -353,7 +270,12 @@ var overrideClearTypes = function(uiObj) {
 };
 
 var main = function() {
-    var text = app.selection[0];
+	var text = app.selection[0];
+	$.writeln(text.constructor.name);
+	if (text.constructor.name !== "Text") {
+		alert("Please select text to convert and try again");
+		exit();
+	}
 	var cont = new Controller(app.activeDocument);
 	var textOverrides = overrideClearTypes(cont);
 	if (textOverrides) {
@@ -367,19 +289,6 @@ var main = function() {
 	makeHeaders(cont.headerCount, table);
 	makeFooters(cont.footerCount, table);
 	table.clearTableStyleOverrides();
-	/*
-    table.headerRowCount = 1;
-    table.rows[1].remove();
-    var tstyle = new TableController();
-	table.appliedTableStyle = "Table Style 1";
-	*/
 };
 
 main();
-//$.writeln(app.selection[0].constructor.name);
-//$.writeln(app.selection[0].contents);
-
-//table.fit();
-
-//app.menuActions.item("$ID/Convert Text to Table...").invoke();
-
