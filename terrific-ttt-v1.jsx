@@ -82,7 +82,7 @@ var Controller = function(doc) {
 		statictext3.alignment = ["left","center"]; 
 
 	var numCols = group3.add('edittext {properties: {name: "numCols"}}'); 
-		numCols.enabled = false; 
+		numCols.enabled = true; 
 		numCols.text = "1"; 
 		numCols.preferredSize.width = 200; 
 
@@ -145,7 +145,7 @@ var Controller = function(doc) {
 	var group6 = panel3.add("group", undefined, {name: "group6"}); 
 		group6.orientation = "row"; 
 		group6.alignChildren = ["left","center"]; 
-		group6.spacing = 10; 
+		group6.spacing = 20; 
 		group6.margins = 0; 
 
 	var statictext5 = group6.add("statictext", undefined, undefined, {name: "statictext5"}); 
@@ -161,13 +161,13 @@ var Controller = function(doc) {
 	var group7 = panel3.add("group", undefined, {name: "group7"}); 
 		group7.orientation = "row"; 
 		group7.alignChildren = ["left","center"]; 
-		group7.spacing = 10; 
-		group7.margins = 0; 
+		group7.spacing = 20; 
+		group7.margins = 5; 
 
 	var statictext6 = group7.add("statictext", undefined, undefined, {name: "statictext6"}); 
 		statictext6.helpTip = "The # of existing header rows in selected text"; 
 		statictext6.text = "Existing footer rows"; 
-		statictext6.preferredSize.width = 130; 
+		statictext6.preferredSize.width = 120; 
 
 	var footerCount = group7.add('edittext {properties: {name: "footerCount"}}'); 
 		footerCount.text = "0"; 
@@ -179,7 +179,7 @@ var Controller = function(doc) {
 		group8.orientation = "column"; 
 		group8.alignChildren = ["left","center"]; 
 		group8.spacing = 10; 
-		group8.margins = 0; 
+		group8.margins = 5; 
 
 	var okButton = group8.add("button", undefined, undefined, {name: "okButton"}); 
 		okButton.text = "OK"; 
@@ -187,24 +187,50 @@ var Controller = function(doc) {
 	var cancelButton = group8.add("button", undefined, undefined, {name: "cancelButton"}); 
 		cancelButton.text = "Cancel"; 
 
+	var processSeparator = function(text) {
+		//$.writeln(text.constructor.name);
+		switch(String(text)) {
+			case "Tab": 
+				return "\t";
+			case "Paragraph": 
+				return "\r";
+			case "Comma": 
+				return ",";
+			default: 
+				return undefined;
+		}
+	};
 
+	validateNumberInputs = function(text) {
+		if (isNaN(text) || parseInt(Number(text)) != text) {
+			alert("Be sure to input integers for all number fields");
+			exit();
+		}
+		return Number(text);
+	};
 
 	//SHOW THE WINDOW
 	var result = dialog.show();
 	var validatedInputObject = {};
 	
 	if (result == 1) {
-		validatedInputObject.footerCount = footerCount.text;
-		validatedInputObject.headerCount = headerCount.text;
+		validatedInputObject.footerCount = validateNumberInputs(footerCount.text);
+		validatedInputObject.headerCount = validateNumberInputs(headerCount.text);
 		validatedInputObject.clearCharStyles = clearCharStyles.value;
 		validatedInputObject.clearParStyles = clearParStyles.value;
-		validatedInputObject.tableStyle = tableStyleDropDown.selection;
-		$.writeln(tableStyleDropDown.selection);
-
-		alert("ok");
+        validatedInputObject.tableStyle = String(tableStyleDropDown.selection);
+        validatedInputObject.colSepSelection = processSeparator(colSepSelection.selection);
+        validatedInputObject.rowSepSelection = processSeparator(rowSepSelection.selection);
+        if (!numCols.enabled) {
+			validatedInputObject.numCols = undefined;
+		}
+		else {
+			validatedInputObject.numCols = validateNumberInputs(numCols.text);
+		}
+		return validatedInputObject;
 	}
 	if (result == 2) {
-		alert("cancel");
+		exit();
 	}
 };
 
@@ -259,7 +285,7 @@ var Controller = function() {
 	if (dialog.show()) {
 		switch(colGroup.selectedButton) {
 			case 0:
-				colType = colType = radLabels.tab;
+				colType = radLabels.tab;
 				break;
 			case 1: 
 				colType = radLabels.par;
@@ -300,19 +326,49 @@ var Controller = function() {
 };
 */
 
+var makeHeaders = function(headerCount, table) {
+	for (var i = 0; i < headerCount; i++) {
+		table.rows[i].rowType = RowTypes.HEADER_ROW;
+	}
+};
 
-var headerMaker = function(headerCount, table) {
-	table.headerRowCount = headerCount;
+var makeFooters = function(footerCount, table) {
+	var tLen = table.rows.length - 1;
+	for (var i = tLen; i > (tLen - footerCount); i--) {
+		table.rows[i].rowType = RowTypes.FOOTER_ROW;
+	}
+};
+
+var overrideClearTypes = function(uiObj) {
+	if (uiObj.clearCharStyles && uiObj.clearParStyles) {
+		return OverrideType.ALL;
+	}
+	if (uiObj.clearCharStyles) {
+		return OverrideType.CHARACTER_ONLY;
+	}
+	if (uiObj.clearParStyles) {
+		return OverrideType.PARAGRAPH_ONLY;
+	}
+	return false;
 };
 
 var main = function() {
     var text = app.selection[0];
-    text.clearOverrides(OverrideType.PARAGRAPH_ONLY);
-    var cont = new Controller(app.activeDocument);
+	var cont = new Controller(app.activeDocument);
+	var textOverrides = overrideClearTypes(cont);
+	if (textOverrides) {
+		text.clearOverrides(textOverrides);
+	}
+	var table = text.convertToTable(cont.colSepSelection, cont.rowSepSelection);
+	var tableStyle = cont.tableStyle;
+	if (tableStyle.toLowerCase().indexOf("no table style") < 0) {
+		table.appliedTableStyle = cont.tableStyle;
+	}
+	makeHeaders(cont.headerCount, table);
+	makeFooters(cont.footerCount, table);
+	table.clearTableStyleOverrides();
 	/*
-	var table = text.convertToTable(cont.getColType(), cont.getRowType());
     table.headerRowCount = 1;
-    table.rows[0].contents = table.rows[1].contents;
     table.rows[1].remove();
     var tstyle = new TableController();
 	table.appliedTableStyle = "Table Style 1";
